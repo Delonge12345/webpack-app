@@ -14,8 +14,8 @@ const darkThemeVars = require('antd/dist/dark-theme');
 * */
 
 
-
-const target = process.env.NODE_ENV === "production" ? "browserslist" : "web";
+const isProd = process.env.NODE_ENV === "production"
+const target = isProd ? "browserslist" : "web";
 
 const plugins = [
     new SourceMapDevToolPlugin({
@@ -34,8 +34,8 @@ const plugins = [
     new Dotenv(),
 
     new MiniCssExtractPlugin({
-        filename: process.env.NODE_ENV === "development" ? '[name].css' : '[name].[hash].css',
-        chunkFilename: process.env.NODE_ENV === "development" ? '[id].css' : '[id].[hash].css',
+        filename: isProd ? '[name].[hash].css' : '[name].css',
+        chunkFilename: isProd ? '[id].[hash].css' : '[id].css',
         ignoreOrder: true,
     }),
     new HtmlWebpackPlugin({
@@ -61,9 +61,6 @@ const plugins = [
 if (process.env.SERVE) {
     plugins.push(new ReactRefreshWebpackPlugin());
 }
-
-const isProd = process.env.NODE_ENV === "production"
-const isDev = process.env.NODE_ENV === "development"
 
 
 const generateSourceMap = process.env.GENERATE_SOURCEMAP
@@ -98,14 +95,16 @@ module.exports = {
         timings: false,
         version: false
     },
+
     output: {
         pathinfo: true,
-        filename: isProd ? "static/js/[name].[contenthash].js" : "[name].js",
         publicPath: '/',
+        filename: isProd ? "static/js/[name].[contenthash].js" : "[name].js",
         chunkFilename: isProd ? "static/js/[name].[chunkhash:8].chunk.js" : "[name].chunk.js",
-        path: path.resolve(__dirname, "/"),
+        path: path.resolve(__dirname, "build"),
         assetModuleFilename: "static/media/[contenthash][ext][query]",
     },
+
     plugins: plugins,
     target: target,
     // node: {
@@ -127,7 +126,7 @@ module.exports = {
             },
         },
     },
-    devtool: process.env.NODE_ENV === 'production' ? false : 'eval-source-map',
+    devtool: isProd ? false : 'eval-source-map',
     resolve: {
         extensions: [
             '.js',
