@@ -6,7 +6,8 @@
     "build-dev": "webpack",
     "clean": "rm -rf dist",
     "start:dev": "webpack-cli serve --mode development --open --hot",
-    "build": "webpack --mode=production"
+    "build": "webpack --mode=production",
+    "server": "node src/server.js"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",
@@ -18,11 +19,13 @@
     "babel-plugin-lodash": "^3.3.4",
     "babel-plugin-styled-components": "^2.0.2",
     "babel-preset-env": "^1.7.0",
+    "chalk": "^5.0.0",
     "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^10.0.0",
     "cross-env": "^7.0.3",
     "css-loader": "^6.5.1",
     "dotenv-webpack": "^7.0.3",
+    "express": "^4.17.2",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "json5-loader": "^4.0.1",
@@ -39,6 +42,7 @@
     "sass": "^1.43.5",
     "sass-loader": "^12.3.0",
     "style-loader": "^3.3.1",
+    "sw-precache-webpack-plugin": "^1.0.0",
     "url-loader": "^4.1.1",
     "webpack": "^5.64.4",
     "webpack-bundle-analyzer": "^4.5.0",

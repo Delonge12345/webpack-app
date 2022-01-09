@@ -7,15 +7,15 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const {SourceMapDevToolPlugin} = require("webpack");
 const {WebpackManifestPlugin} = require('webpack-manifest-plugin');
 const darkThemeVars = require('antd/dist/dark-theme');
+const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
 
 
-/*new SWPrecacheWebpackPlugin
-*
-* */
 
-
+const publicPath = '/';
 const isProd = process.env.NODE_ENV === "production"
 const target = isProd ? "browserslist" : "web";
+const publicUrl = publicPath.slice(0, -1);
+
 
 const plugins = [
     new SourceMapDevToolPlugin({
@@ -28,6 +28,30 @@ const plugins = [
     new WebpackManifestPlugin({
         fileName: 'asset-manifest.json',
     }),
+
+    /**
+     * service worker for webpack.prod.conf
+     * **/
+   // new SWPrecacheWebpackPlugin({
+   //      dontCacheBustUrlsMatching: /\.\w{8}\./,
+   //      filename: 'service-worker.js',
+   //      logger(message) {
+   //          if (message.indexOf('Total precache size is') === 0) {
+   //              // This message occurs for every build and is a bit too noisy.
+   //              return;
+   //          }
+   //          if (message.indexOf('Skipping static resource') === 0) {
+   //
+   //              return;
+   //          }
+   //          console.log(message);
+   //      },
+   //      minify: true,
+   //      navigateFallback: publicUrl + '/index.html',
+   //      navigateFallbackWhitelist: [/^(?!\/__).*/],
+   //      staticFileGlobsIgnorePatterns: [/\.map$/, /asset-manifest\.json$/],
+   //  }),
+
     new webpack.ProvidePlugin({
         React: "react"
     }),
@@ -39,7 +63,7 @@ const plugins = [
         ignoreOrder: true,
     }),
     new HtmlWebpackPlugin({
-        template: './src/index.html',
+        template: './public/index.html',
         // inject: true,
         /*For production*/
         minify: {
