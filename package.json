@@ -11,12 +11,15 @@
     "lint-es": "./node_modules/.bin/eslint --fix --cache ./**/*.{js,jsx,ts,tsx,json} && prettier --write **/*.{js,jsx,ts,tsx,json,html} --loglevel warn",
     "lint-styles": "./node_modules/.bin/stylelint --fix --cache ./**/*.{css,scss,less} && prettier --write **/*.{css,scss,less} --loglevel warn",
     "lint-md": "./node_modules/.bin/markdownlint --fix **/*.md --ignore node_modules",
-    "prepare": "husky install && shx rm -rf .git/hooks && shx ln -s ../.husky .git/hooks && git config --unset core.hooksPath"
+    "prepare": "husky install && shx rm -rf .git/hooks && shx ln -s ../.husky .git/hooks && git config --unset core.hooksPath",
+    "pre-commit-lint": "yarn lint-staged"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-react": "^7.16.0",
+    "@commitlint/cli": "^16.1.0",
+    "@commitlint/config-conventional": "^16.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.2",
     "@typescript-eslint/parser": "^5.11.0",
     "babel-loader": "^8.2.3",
