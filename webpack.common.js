@@ -4,7 +4,7 @@
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
-// const PreloadPlugin = require("preload-webpack-plugin");
+const PreloadPlugin = require("preload-webpack-plugin");
 const FriendlyErrorsWebpackPlugin = require("friendly-errors-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CleanPlugin = require("clean-webpack-plugin");
@@ -19,13 +19,10 @@ const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin"
 const darkThemeVars = require("antd/dist/dark-theme");
 const MinifyCssNames = require("mini-css-class-name/css-loader");
 
-// const srcPath = path.resolve(__dirname, "./src/");
 const buildPath = path.resolve(__dirname, "/build");
 const publicPath = "./public";
 const filesThreshold = 8196; // (bytes) threshold for compression, url-loader plugins
 const indexHtmlPath = path.resolve(__dirname, "./public/");
-
-// const isProd = process.env.NODE_ENV === "production"
 
 /* eslint-disable func-names */
 module.exports = function (env, argv) {
@@ -33,15 +30,8 @@ module.exports = function (env, argv) {
   const mode = argv.mode || (isDevServer ? "development" : "production");
 
   const isDevMode = mode !== "production";
-
   const target = !isDevMode ? "browserslist" : "web";
   const generateSourceMap = process.env.GENERATE_SOURCEMAP;
-  // const cssModuleOptions = !isDevMode
-  //   ? {
-  //       localIdentName: "[contenthash:base64:8]",
-  //       exportLocalsConvention: "camelCase",
-  //     }
-  //   : { localIdentName: "[name]__[local]___[hash:base64:5]", exportLocalsConvention: "camelCase" };
 
   const plugins = [
     new SourceMapDevToolPlugin({
@@ -55,6 +45,7 @@ module.exports = function (env, argv) {
       React: "react",
     }),
     new Dotenv(),
+
     new MiniCssExtractPlugin({
       filename: !isDevMode ? "[name].[contenthash].css" : "[name].css",
       chunkFilename: !isDevMode ? "[id].[contenthash].css" : "[id].css",
@@ -62,8 +53,6 @@ module.exports = function (env, argv) {
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(indexHtmlPath, "index.html"),
-      // inject: true,
-      /* For production*/
       minify: !isDevMode && {
         removeComments: true,
         collapseWhitespace: true,
@@ -78,24 +67,25 @@ module.exports = function (env, argv) {
       },
     }),
     new CleanPlugin.CleanWebpackPlugin(),
+
     new CopyWebpackPlugin({
       patterns: [
         {
           from: publicPath,
-          to: path.resolve(__dirname, buildPath),
-          toType: "dir",
+          globOptions: {
+            ignore: ["**/index.html"],
+          },
         },
       ],
     }),
+
     new webpack.ProgressPlugin(),
     new webpack.ProvidePlugin({
       React: "react", // optional: react. it adds [import React from 'react'] as ES6 module to every file into the project
     }),
     new ObsoleteWebpackPlugin({
-      // optional: browser: provides popup via alert-script if browser unsupported (according to .browserlistrc)
       name: "obsolete",
       promptOnNonTargetBrowser: true, // show popup if browser is not listed in .browserlistrc
-      // optional: browser: [template: 'html string here']
     }),
     new ScriptExtHtmlWebpackPlugin({
       // it adds to obsolete-plugin-script 'async' tag (for perfomance puprpose)
@@ -159,7 +149,6 @@ module.exports = function (env, argv) {
 
     /* Right*/
     optimization: {
-      // config is taken from vue-cli
       splitChunks: {
         // for avoiding duplicated dependencies across modules
         minChunks: 1, // Minimum number of chunks that must share a module before splitting.
