@@ -18,6 +18,7 @@ const Dotenv = require("dotenv-webpack");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const darkThemeVars = require("antd/dist/dark-theme");
 const MinifyCssNames = require("mini-css-class-name/css-loader");
+const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 
 const buildPath = path.resolve(__dirname, "/build");
 const publicPath = "./public";
@@ -36,6 +37,12 @@ module.exports = function (env, argv) {
   const plugins = [
     new SourceMapDevToolPlugin({
       filename: "[file].map",
+    }),
+
+    new BundleAnalyzerPlugin({
+      analyzerMode: "disabled",
+      generateStatsFile: true,
+      statsOptions: { source: false },
     }),
 
     new WebpackManifestPlugin({
