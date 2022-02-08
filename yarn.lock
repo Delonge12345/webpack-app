@@ -10722,6 +10722,11 @@ mini-create-react-context@^0.4.0:
     "@babel/runtime" "^7.12.1"
     tiny-warning "^1.0.3"
 
+mini-css-class-name@^0.13.0:
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/mini-css-class-name/-/mini-css-class-name-0.13.0.tgz#09a5b8115372fe92ee4762233b3743b4089ee1ce"
+  integrity sha512-blgKVJWgFAN5POMh4DQUOfAN/W81KGefLblWknNp6FkCQ532H77KbFiumFARS5q9aDBv3WKa3ibMjzCvuaQrVA==
+
 mini-css-extract-plugin@0.11.3:
   version "0.11.3"
   resolved "https://registry.yarnpkg.com/mini-css-extract-plugin/-/mini-css-extract-plugin-0.11.3.tgz#15b0910a7f32e62ffde4a7430cfefbd700724ea6"

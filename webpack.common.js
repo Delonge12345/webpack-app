@@ -17,6 +17,7 @@ const { WebpackManifestPlugin } = require("webpack-manifest-plugin");
 const Dotenv = require("dotenv-webpack");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const darkThemeVars = require("antd/dist/dark-theme");
+const MinifyCssNames = require("mini-css-class-name/css-loader");
 
 // const srcPath = path.resolve(__dirname, "./src/");
 const buildPath = path.resolve(__dirname, "/build");
@@ -35,12 +36,12 @@ module.exports = function (env, argv) {
 
   const target = !isDevMode ? "browserslist" : "web";
   const generateSourceMap = process.env.GENERATE_SOURCEMAP;
-  const cssModuleOptions = !isDevMode
-    ? {
-        localIdentName: "[contenthash:base64:8]",
-        exportLocalsConvention: "camelCase",
-      }
-    : { localIdentName: "[name]__[local]___[hash:base64:5]", exportLocalsConvention: "camelCase" };
+  // const cssModuleOptions = !isDevMode
+  //   ? {
+  //       localIdentName: "[contenthash:base64:8]",
+  //       exportLocalsConvention: "camelCase",
+  //     }
+  //   : { localIdentName: "[name]__[local]___[hash:base64:5]", exportLocalsConvention: "camelCase" };
 
   const plugins = [
     new SourceMapDevToolPlugin({
@@ -241,7 +242,10 @@ module.exports = function (env, argv) {
 
                         return `${request}__${localName}`;
                       }
-                    : cssModuleOptions,
+                    : MinifyCssNames(
+                        // minify classNames for prod-build
+                        { excludePattern: /[_dD]/gi } // exclude '_','d','D' because Adblock blocks '%ad%' classNames
+                      ),
                 },
                 importLoaders: 1,
               },
