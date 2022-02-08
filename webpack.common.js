@@ -22,15 +22,20 @@ const darkThemeVars = require("antd/dist/dark-theme");
 const buildPath = path.resolve(__dirname, "/build");
 const publicPath = "./public";
 const filesThreshold = 8196; // (bytes) threshold for compression, url-loader plugins
+const indexHtmlPath = path.resolve(__dirname, "./public/");
+
 // const isProd = process.env.NODE_ENV === "production"
 
 /* eslint-disable func-names */
-module.exports = function () {
-  const isProd = process.env.NODE_ENV === "production";
+module.exports = function (env, argv) {
+  const isDevServer = env.WEBPACK_SERVE;
+  const mode = argv.mode || (isDevServer ? "development" : "production");
 
-  const target = isProd ? "browserslist" : "web";
+  const isDevMode = mode !== "production";
+
+  const target = !isDevMode ? "browserslist" : "web";
   const generateSourceMap = process.env.GENERATE_SOURCEMAP;
-  const cssModuleOptions = isProd
+  const cssModuleOptions = !isDevMode
     ? {
         localIdentName: "[contenthash:base64:8]",
         exportLocalsConvention: "camelCase",
@@ -50,15 +55,15 @@ module.exports = function () {
     }),
     new Dotenv(),
     new MiniCssExtractPlugin({
-      filename: isProd ? "[name].[contenthash].css" : "[name].css",
-      chunkFilename: isProd ? "[id].[contenthash].css" : "[id].css",
+      filename: !isDevMode ? "[name].[contenthash].css" : "[name].css",
+      chunkFilename: !isDevMode ? "[id].[contenthash].css" : "[id].css",
       ignoreOrder: true,
     }),
     new HtmlWebpackPlugin({
-      template: path.resolve(path.resolve(__dirname, "./public/"), "index.html"),
+      template: path.resolve(indexHtmlPath, "index.html"),
       // inject: true,
       /* For production*/
-      minify: isProd && {
+      minify: !isDevMode && {
         removeComments: true,
         collapseWhitespace: true,
         removeRedundantAttributes: true,
@@ -101,6 +106,14 @@ module.exports = function () {
     }),
     new CaseSensitivePathsPlugin(),
     new FriendlyErrorsWebpackPlugin(),
+
+    new webpack.DefinePlugin({
+      // it adds custom Global definition to the project like BASE_URL for index.html
+      "process.env.NODE_ENV": JSON.stringify(mode),
+      "global.DEV": JSON.stringify(isDevMode),
+      "global.DEBUG": JSON.stringify(false),
+      "global.VERBOSE": JSON.stringify(false),
+    }),
   ];
 
   if (process.env.SERVE) {
@@ -109,11 +122,11 @@ module.exports = function () {
 
   /** @type {import('webpack').Configuration} */
   const result = {
-    mode: isProd ? "production" : "development",
-    devtool: isProd ? false : "eval-cheap-module-source-map",
+    mode: !isDevMode ? "production" : "development",
+    devtool: !isDevMode ? false : "eval-cheap-module-source-map",
     entry: path.resolve(__dirname, "./src/", "index.js"),
     performance: {
-      hints: isProd ? "warning" : false,
+      hints: !isDevMode ? "warning" : false,
       maxEntrypointSize: 5120,
       maxAssetSize: 5120,
     },
@@ -134,8 +147,8 @@ module.exports = function () {
     output: {
       pathinfo: true,
       publicPath: "/",
-      filename: isProd ? "static/js/[name].[contenthash].js" : "[name].js",
-      chunkFilename: isProd ? "static/js/[name].[chunkhash:8].chunk.js" : "[name].chunk.js",
+      filename: !isDevMode ? "static/js/[name].[contenthash].js" : "[name].js",
+      chunkFilename: !isDevMode ? "static/js/[name].[chunkhash:8].chunk.js" : "[name].chunk.js",
       path: path.resolve(__dirname, "build"),
       assetModuleFilename: "static/media/[contenthash][ext][query]",
     },
@@ -216,7 +229,7 @@ module.exports = function () {
                 // modules: cssModuleOptions,
                 modules: {
                   auto: /\.module\.\w+$/, // enable css-modules option for files *.module*.
-                  getLocalIdent: !isProd
+                  getLocalIdent: isDevServer
                     ? (loaderContext, _localIdentName, localName, options) => {
                         const request = path
                           .relative(options.context || "", loaderContext.resourcePath)
@@ -304,21 +317,21 @@ module.exports = function () {
         /* jsx loader*/
         {
           test: /\.(js|jsx|ts|tsx)$/,
-          exclude: isProd ? /core-js|regenerator-runtime/ : /node_modules/,
+          exclude: !isDevMode ? /core-js|regenerator-runtime/ : /node_modules/,
           use: {
             loader: "babel-loader",
 
             options: {
-              cacheDirectory: isProd,
-              cacheCompression: isProd,
-              compact: isProd,
+              cacheDirectory: !isDevMode,
+              cacheCompression: !isDevMode,
+              compact: !isDevMode,
             },
           },
         },
         /* tsx loader*/
         {
           test: /\.(ts|tsx)$/,
-          exclude: isProd ? /core-js|regenerator-runtime/ : /node_modules/,
+          exclude: !isDevMode ? /core-js|regenerator-runtime/ : /node_modules/,
           use: [
             "babel-loader",
             {
