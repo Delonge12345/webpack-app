@@ -8,13 +8,26 @@ const {SourceMapDevToolPlugin} = require("webpack");
 const {WebpackManifestPlugin} = require('webpack-manifest-plugin');
 const darkThemeVars = require('antd/dist/dark-theme');
 const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin');
+const FriendlyErrorsWebpackPlugin = require("friendly-errors-webpack-plugin");
+const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
+const CleanPlugin = require("clean-webpack-plugin");
 
 
+
+const PreloadPlugin = require("preload-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+const CompressionPlugin = require("compression-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const ObsoleteWebpackPlugin = require("obsolete-webpack-plugin");
+const ScriptExtHtmlWebpackPlugin = require("script-ext-html-webpack-plugin");
 
 const publicPath = '/';
 const isProd = process.env.NODE_ENV === "production"
 const target = isProd ? "browserslist" : "web";
-const publicUrl = publicPath.slice(0, -1);
+
+// const srcPath = path.resolve(__dirname, "./src/");
+// const buildPath = path.resolve(__dirname, "./build/");
+// const assetsPath = "./public";
 
 
 const plugins = [
@@ -58,15 +71,16 @@ const plugins = [
     new Dotenv(),
 
     new MiniCssExtractPlugin({
-        filename: isProd ? '[name].[hash].css' : '[name].css',
-        chunkFilename: isProd ? '[id].[hash].css' : '[id].css',
+        filename: isProd ?  "[name].[contenthash].css" : '[name].css',
+        chunkFilename: isProd ? "[id].[contenthash].css" : '[id].css',
         ignoreOrder: true,
     }),
     new HtmlWebpackPlugin({
-        template: './public/index.html',
+        template: path.resolve(path.resolve(__dirname, "./public/"), "index.html"),
         // inject: true,
+
         /*For production*/
-        minify: {
+        minify: isProd && {
             removeComments: true,
             collapseWhitespace: true,
             removeRedundantAttributes: true,
@@ -79,6 +93,38 @@ const plugins = [
             minifyURLs: true,
         },
     }),
+    new CleanPlugin.CleanWebpackPlugin(),
+
+    // new CopyWebpackPlugin({
+    //     patterns: [
+    //         {
+    //             from: "./public",
+    //             to:  path.resolve(__dirname, "/build"),
+    //             toType: "dir",
+    //         },
+    //     ],
+    // }),
+    new webpack.ProgressPlugin(),
+    new webpack.ProvidePlugin({
+        React: "react", // optional: react. it adds [import React from 'react'] as ES6 module to every file into the project
+    }),
+    new ObsoleteWebpackPlugin({
+        // optional: browser: provides popup via alert-script if browser unsupported (according to .browserlistrc)
+        name: "obsolete",
+        promptOnNonTargetBrowser: true, // show popup if browser is not listed in .browserlistrc
+        // optional: browser: [template: 'html string here']
+    }),
+    new ScriptExtHtmlWebpackPlugin({
+        // it adds to obsolete-plugin-script 'async' tag (for perfomance puprpose)
+        async: "obsolete",
+    }),
+
+    new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+    }),
+    new CaseSensitivePathsPlugin(),
+    new FriendlyErrorsWebpackPlugin(),
 ]
 
 
@@ -127,8 +173,15 @@ module.exports = {
         chunkFilename: isProd ? "static/js/[name].[chunkhash:8].chunk.js" : "[name].chunk.js",
         path: path.resolve(__dirname, "build"),
         assetModuleFilename: "static/media/[contenthash][ext][query]",
+
+
     },
 
+    performance: {
+        assetFilter: function assetFilter(assetFilename) {
+            return !/(\.map$)|(fonts)|(images)/.test(assetFilename); // ignore these files from perfomance-hints
+        },
+    },
     plugins: plugins,
     target: target,
     // node: {
@@ -138,19 +191,74 @@ module.exports = {
     //     tls: 'empty',
     //     child_process: 'empty',
     // },
+
+
+
+
+    /*webpack.prod config!!!*/
     optimization: {
-        splitChunks: {
-            cacheGroups: {
-                vendor: {
-                    test: /node_modules/,
-                    chunks: 'initial',
-                    name: 'vendor',
-                    enforce: true,
+
+        /*Prod*/
+        minimizer: [
+            new TerserPlugin({
+                // default webpack plugin for js-optimization which should be configured: https://v4.webpack.js.org/configuration/optimization/#optimizationminimizer
+                // speedest alternative of UglifyJS (it improves minifying js files)
+                test: /\.m?js(\?.*)?$/i,
+                extractComments: false, // disable extracting comments to a different file
+                terserOptions: {
+                    toplevel: true, // https://github.com/terser/terser#minify-options
+                    output: {
+                        comments: false, // remove comments from files
+                    },
+                    mangle: {
+                        safari10: true, // for preventing Safari 10/11 bugs in loop scoping and await
+                    },
+                    compress: { pure_funcs: ["console.info", "console.debug", "console.warn"] }, // remove this functions when their return values are not used
                 },
-            },
-        },
+            }),
+        ],
+        // splitChunks: {
+        //     cacheGroups: {
+        //         vendor: {
+        //             test: /node_modules/,
+        //             chunks: 'initial',
+        //             name: 'vendor',
+        //             enforce: true,
+        //         },
+        //     },
+        // },
+
+
     },
-    devtool: isProd ? false : 'eval-source-map',
+
+
+    /*webpack.dev config!!!*/
+    // optimization: {
+    //     // config is taken from vue-cli
+    //     splitChunks: {
+    //         // for avoiding duplicated dependencies across modules
+    //         minChunks: 1, // Minimum number of chunks that must share a module before splitting.
+    //         cacheGroups: {
+    //             defaultVendors: {
+    //                 name: "chunk-vendors", // move js-files from node_modules into splitted file [chunk-vendors].js
+    //                 test: /[\\/]node_modules[\\/]/, // filtering files that should be included
+    //                 priority: -10, // a module can belong to multiple cache groups. The optimization will prefer the cache group with a higher priority
+    //                 chunks: "initial", // type of optimization: [initial | async | all]
+    //             },
+    //             common: {
+    //                 name: "chunk-common", // move reusable nested js-files into splitted file [chunk-common].js
+    //                 minChunks: 2, // minimum number of chunks that must share a module before splitting
+    //                 priority: -20,
+    //                 chunks: "initial",
+    //                 reuseExistingChunk: true, // If the current chunk contains modules already split out from the main bundle, it will be reused instead of a new one being generated. This can impact the resulting file name of the chunk
+    //             },
+    //         },
+    //     },
+    // },
+
+
+
+    devtool: isProd ? false : "eval-cheap-module-source-map",
     resolve: {
         extensions: [
             '.js',
@@ -173,6 +281,8 @@ module.exports = {
         compress: true,
         hot: true,
     },
+
+
     module: {
         rules: [
 
@@ -222,7 +332,22 @@ module.exports = {
                     {
                         loader: "css-loader",
                         options: {
-                            modules: cssModuleOptions,
+                            // modules: cssModuleOptions,
+                            modules: {
+                                auto: /\.module\.\w+$/, // enable css-modules option for files *.module*.
+                                getLocalIdent: !isProd
+                                    ? (loaderContext, _localIdentName, localName, options) => {
+                                        const request = path
+                                            .relative(options.context || "", loaderContext.resourcePath)
+                                            .replace(`src${path.sep}`, "")
+                                            .replace(".module.css", "")
+                                            .replace(".module.scss", "")
+                                            .replace(/\\|\//g, "-")
+                                            .replace(/\./g, "_");
+                                        return `${request}__${localName}`;
+                                    }
+                                    : cssModuleOptions
+                            },
                             importLoaders: 1
                         }
                     },
@@ -308,6 +433,20 @@ module.exports = {
                         compact: isProd,
                     },
                 },
+            },
+            /*tsx loader*/
+            {
+                test: /\.(ts|tsx)$/,
+                exclude: isProd ? /core-js|regenerator-runtime/ : /node_modules/,
+                use: [
+                    "babel-loader",
+                    {
+                        loader: "ts-loader",
+                        options: {
+                            transpileOnly: true,
+                        },
+                    },
+                ],
             },
         ],
     },
