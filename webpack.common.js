@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable import/no-extraneous-dependencies */
-// console.clear(); // TODO: watchFix => it doesn't work properly since VSCode-terminal has bug: https://github.com/microsoft/vscode/issues/75141
+
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
-const PreloadPlugin = require("preload-webpack-plugin");
 const FriendlyErrorsWebpackPlugin = require("friendly-errors-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CleanPlugin = require("clean-webpack-plugin");
@@ -20,7 +19,7 @@ const darkThemeVars = require("antd/dist/dark-theme");
 const MinifyCssNames = require("mini-css-class-name/css-loader");
 const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 
-const buildPath = path.resolve(__dirname, "/build");
+// const buildPath = path.resolve(__dirname, "/build");
 const publicPath = "./public";
 const filesThreshold = 8196; // (bytes) threshold for compression, url-loader plugins
 const indexHtmlPath = path.resolve(__dirname, "./public/");
@@ -140,6 +139,8 @@ module.exports = function (env, argv) {
       reasons: false,
       timings: false,
       version: false,
+      errors: true,
+      errorDetails: true,
     },
 
     output: {
@@ -154,7 +155,6 @@ module.exports = function (env, argv) {
       extensions: [".js", ".jsx", ".scss", ".css", ".png", ".svg", ".ts", ".tsx"],
     },
 
-    /* Right*/
     optimization: {
       splitChunks: {
         // for avoiding duplicated dependencies across modules
@@ -178,6 +178,14 @@ module.exports = function (env, argv) {
     },
     module: {
       rules: [
+        {
+          test: /\.mp3$/,
+          loader: "file-loader",
+          options: {
+            name: "[path][name].[ext]",
+          },
+        },
+
         /* json loader*/
         {
           test: /\.json$/i,
@@ -185,6 +193,58 @@ module.exports = function (env, argv) {
           type: "javascript/auto",
         },
 
+        /* img loader*/
+        {
+          test: /\.(?:ico|png|jpg|jpeg|svg|gif)$/,
+          exclude: /node_modules/,
+          type: "asset/resource",
+          parser: {
+            dataUrlCondition: {
+              maxSize: 30 * 1024,
+            },
+          },
+        },
+
+        /* fonts loader*/
+        {
+          test: /\.(ttf|woff|woff2|eot)$/,
+          type: "asset/resource",
+          generator: {
+            filename: "fonts/[hash][ext][query]",
+          },
+        },
+
+        /* jsx loader*/
+        {
+          test: /\.(js|jsx|ts|tsx)$/,
+          exclude: !isDevMode ? /core-js|regenerator-runtime/ : /node_modules/,
+          use: {
+            loader: "babel-loader",
+
+            options: {
+              cacheDirectory: !isDevMode,
+              cacheCompression: !isDevMode,
+              compact: !isDevMode,
+            },
+          },
+        },
+
+        /* tsx loader*/
+        {
+          test: /\.(ts|tsx)$/,
+          exclude: !isDevMode ? /core-js|regenerator-runtime/ : /node_modules/,
+          use: [
+            "babel-loader",
+            {
+              loader: "ts-loader",
+              options: {
+                transpileOnly: true,
+              },
+            },
+          ],
+        },
+
+        /** ***************************************STYLES_LOADERS_START*******************************************************************/
         /* css loader*/
         {
           test: /\.css$/i,
@@ -246,6 +306,7 @@ module.exports = function (env, argv) {
                 importLoaders: 1,
               },
             },
+
             {
               loader: "postcss-loader",
               options: {
@@ -261,7 +322,7 @@ module.exports = function (env, argv) {
           ],
         },
 
-        /* less loader*/
+        /* less loader (for antd theme)*/
         {
           test: /\.less$/,
           use: [
@@ -293,55 +354,7 @@ module.exports = function (env, argv) {
           ],
         },
 
-        /* img loader*/
-        {
-          test: /\.(?:ico|png|jpg|jpeg|svg|gif)$/,
-          exclude: /node_modules/,
-          type: "asset/resource",
-          parser: {
-            dataUrlCondition: {
-              maxSize: 30 * 1024,
-            },
-          },
-        },
-
-        /* fonts loader*/
-        {
-          test: /\.(ttf|woff|woff2|eot)$/,
-          type: "asset/resource",
-          generator: {
-            filename: "fonts/[hash][ext][query]",
-          },
-        },
-
-        /* jsx loader*/
-        {
-          test: /\.(js|jsx|ts|tsx)$/,
-          exclude: !isDevMode ? /core-js|regenerator-runtime/ : /node_modules/,
-          use: {
-            loader: "babel-loader",
-
-            options: {
-              cacheDirectory: !isDevMode,
-              cacheCompression: !isDevMode,
-              compact: !isDevMode,
-            },
-          },
-        },
-        /* tsx loader*/
-        {
-          test: /\.(ts|tsx)$/,
-          exclude: !isDevMode ? /core-js|regenerator-runtime/ : /node_modules/,
-          use: [
-            "babel-loader",
-            {
-              loader: "ts-loader",
-              options: {
-                transpileOnly: true,
-              },
-            },
-          ],
-        },
+        /** ***********************************************STYLES_LOADERS_END**************************************************************/
       ],
     },
     plugins,
